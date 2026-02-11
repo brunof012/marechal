@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>MARECHAL ARTHUR</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+
+<style>
+*{box-sizing:border-box;font-family:Segoe UI,Tahoma,sans-serif}
+body{margin:0;background:#0f172a;color:#e5e7eb}
+header{padding:20px;text-align:center;background:#020617;border-bottom:1px solid #1e293b}
+h1{margin:0;letter-spacing:2px}
+.container{padding:30px}
+
+.dashboard{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+gap:20px;
+}
+.card-dashboard{
+background:#020617;
+border-radius:14px;
+padding:30px;
+text-align:center;
+cursor:pointer;
+transition:.3s;
+box-shadow:0 10px 25px rgba(0,0,0,.4)
+}
+.card-dashboard:hover{
+transform:translateY(-5px);
+box-shadow:0 15px 30px rgba(0,0,0,.6)
+}
+.card-dashboard span{
+font-size:40px;
+display:block;
+margin-bottom:10px
+}
+
+.module{display:none}
+.module .card{
+background:#020617;
+border-radius:12px;
+padding:20px;
+box-shadow:0 10px 25px rgba(0,0,0,.4)
+}
+button{
+background:#2563eb;
+border:none;
+padding:6px 10px;
+border-radius:6px;
+color:#fff;
+cursor:pointer
+}
+button:hover{background:#1d4ed8}
+.delete{background:#dc2626}
+.delete:hover{background:#b91c1c}
+input{
+background:#111827;
+color:#fff;
+border:1px solid #1e293b;
+border-radius:6px;
+padding:8px;
+margin:4px 0
+}
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:10px
+}
+th,td{
+padding:8px;
+text-align:center;
+border-bottom:1px solid #1e293b
+}
+th{color:#93c5fd}
+.pdf{background:#0ea5e9;margin-top:10px}
+.back{background:#334155;margin-bottom:10px}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>MARECHAL ARTHUR</h1>
+<span>Sistema de Controle Interno</span>
+</header>
+
+<div class="container">
+
+<div id="dashboard" class="dashboard">
+<div class="card-dashboard" onclick="openModule('refrigeracao')"><span>❄️</span>Refrigeração</div>
+<div class="card-dashboard" onclick="openModule('estoque')"><span>📦</span>Estoque Merenda</div>
+<div class="card-dashboard" onclick="openModule('carneos')"><span>🥩</span>Cárneos</div>
+<div class="card-dashboard" onclick="openModule('lacteos')"><span>🧀</span>Lácteos</div>
+</div>
+
+<!-- REFRIGERAÇÃO -->
+<section id="refrigeracao" class="module">
+<button class="back" onclick="back()">⬅ Dashboard</button>
+<div class="card">
+<h2>❄️ Refrigeração</h2>
+<input type="date" id="rData">
+<input type="text" id="rNum" placeholder="Freezer">
+<input type="number" id="rTemp" placeholder="Temp °C">
+<button onclick="addR()">Registrar</button>
+
+<table>
+<thead>
+<tr><th>Data</th><th>Freezer</th><th>Temp</th><th>Ação</th></tr>
+</thead>
+<tbody id="rTab"></tbody>
+</table>
+
+<button class="pdf" onclick="pdfR()">Gerar PDF</button>
+</div>
+</section>
+
+<!-- ESTOQUE -->
+<section id="estoque" class="module">
+<button class="back" onclick="back()">⬅ Dashboard</button>
+<div class="card">
+<h2>📦 Estoque Merenda</h2>
+<input id="eNome" placeholder="Produto">
+<input id="eMarca" placeholder="Marca">
+<input type="date" id="eVal">
+<button onclick="addE()">Adicionar</button>
+
+<table>
+<thead>
+<tr><th>Produto</th><th>Marca</th><th>Validade</th><th>Ação</th></tr>
+</thead>
+<tbody id="eTab"></tbody>
+</table>
+</div>
+</section>
+
+<!-- CÁRNEOS -->
+<section id="carneos" class="module">
+<button class="back" onclick="back()">⬅ Dashboard</button>
+<div class="card">
+<h2>🥩 Cárneos</h2>
+<input id="cNome" placeholder="Produto">
+<input type="date" id="cCheg">
+<input type="date" id="cFab">
+<input type="date" id="cVal">
+<input id="cTemp" placeholder="Temp °C">
+<button onclick="addC()">Registrar</button>
+
+<table>
+<thead>
+<tr>
+<th>Produto</th><th>Chegada</th><th>Fabricação</th>
+<th>Validade</th><th>Temp</th><th>Ação</th>
+</tr>
+</thead>
+<tbody id="cTab"></tbody>
+</table>
+
+<button class="pdf" onclick="pdfC()">Gerar PDF</button>
+</div>
+</section>
+
+<!-- LÁCTEOS -->
+<section id="lacteos" class="module">
+<button class="back" onclick="back()">⬅ Dashboard</button>
+<div class="card">
+<h2>🧀 Lácteos</h2>
+<input id="lNome" placeholder="Produto">
+<input type="date" id="lCheg">
+<input id="lTemp" placeholder="Temp °C">
+<button onclick="addL()">Registrar</button>
+
+<table>
+<thead>
+<tr><th>Produto</th><th>Chegada</th><th>Temp</th><th>Ação</th></tr>
+</thead>
+<tbody id="lTab"></tbody>
+</table>
+
+<button class="pdf" onclick="pdfL()">Gerar PDF</button>
+</div>
+</section>
+
+</div>
+
+<script>
+let R = JSON.parse(localStorage.getItem('R')) || []
+let E = JSON.parse(localStorage.getItem('E')) || []
+let C = JSON.parse(localStorage.getItem('C')) || []
+let L = JSON.parse(localStorage.getItem('L')) || []
+
+function save(){
+localStorage.setItem('R',JSON.stringify(R))
+localStorage.setItem('E',JSON.stringify(E))
+localStorage.setItem('C',JSON.stringify(C))
+localStorage.setItem('L',JSON.stringify(L))
+}
+
+function openModule(id){
+dashboard.style.display='none'
+document.querySelectorAll('.module').forEach(m=>m.style.display='none')
+document.getElementById(id).style.display='block'
+}
+
+function back(){
+dashboard.style.display='grid'
+document.querySelectorAll('.module').forEach(m=>m.style.display='none')
+}
+
+function render(){
+rTab.innerHTML=''
+eTab.innerHTML=''
+cTab.innerHTML=''
+lTab.innerHTML=''
+
+R.forEach((o,i)=>rTab.innerHTML+=
+`<tr><td>${o.d}</td><td>${o.n}</td><td>${o.t}</td>
+<td><button class="delete" onclick="delR(${i})">Excluir</button></td></tr>`)
+
+E.forEach((o,i)=>eTab.innerHTML+=
+`<tr><td>${o.n}</td><td>${o.m}</td><td>${o.v}</td>
+<td><button class="delete" onclick="delE(${i})">Excluir</button></td></tr>`)
+
+C.forEach((o,i)=>cTab.innerHTML+=
+`<tr><td>${o.n}</td><td>${o.c}</td><td>${o.f}</td><td>${o.v}</td><td>${o.t}</td>
+<td><button class="delete" onclick="delC(${i})">Excluir</button></td></tr>`)
+
+L.forEach((o,i)=>lTab.innerHTML+=
+`<tr><td>${o.n}</td><td>${o.c}</td><td>${o.t}</td>
+<td><button class="delete" onclick="delL(${i})">Excluir</button></td></tr>`)
+}
+
+function addR(){R.push({d:rData.value,n:rNum.value,t:rTemp.value});save();render()}
+function addE(){E.push({n:eNome.value,m:eMarca.value,v:eVal.value});save();render()}
+function addC(){C.push({n:cNome.value,c:cCheg.value,f:cFab.value,v:cVal.value,t:cTemp.value});save();render()}
+function addL(){L.push({n:lNome.value,c:lCheg.value,t:lTemp.value});save();render()}
+
+function delR(i){R.splice(i,1);save();render()}
+function delE(i){E.splice(i,1);save();render()}
+function delC(i){C.splice(i,1);save();render()}
+function delL(i){L.splice(i,1);save();render()}
+
+window.onload=render
+
+function pdfR(){
+const d=new jspdf.jsPDF()
+d.text("Relatório de Refrigeração",14,15)
+d.autoTable({startY:25,head:[['Data','Freezer','Temp']],body:R.map(x=>[x.d,x.n,x.t])})
+d.save("refrigeracao.pdf")
+}
+function pdfC(){
+const d=new jspdf.jsPDF()
+d.text("Relatório de Cárneos",14,15)
+d.autoTable({startY:25,head:[['Produto','Chegada','Fabricação','Validade','Temp']],body:C.map(x=>[x.n,x.c,x.f,x.v,x.t])})
+d.save("carneos.pdf")
+}
+function pdfL(){
+const d=new jspdf.jsPDF()
+d.text("Relatório de Lácteos",14,15)
+d.autoTable({startY:25,head:[['Produto','Chegada','Temp']],body:L.map(x=>[x.n,x.c,x.t])})
+d.save("lacteos.pdf")
+}
+</script>
+
+</body>
+</html>
